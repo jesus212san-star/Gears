@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gears of War: Judgment - The Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        header {
+            background-color: #8b0000;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 5px solid #4a0000;
+            margin-bottom: 20px;
+        }
+        .game-container {
+            background: #262626;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
+            text-align: center;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ff4500;
+        }
+        .screen {
+            min-height: 200px;
+            border: 2px dashed #444;
+            margin: 20px 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .btn {
+            background: #8b0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .btn:hover { background: #ff4500; }
+        .btn:disabled { background: #444; cursor: not-allowed; }
+        
+        .log {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        .star { color: gold; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Gears of War: Judgment</h1>
+    <p>Simulador de Combate: Squad Kilo</p>
+</header>
+
+<div class="game-container">
+    <div class="stats">
+        <div>HP: <span id="hp">100</span></div>
+        <div>Munición: <span id="ammo">30</span></div>
+        <div>Estrellas: <span id="stars" class="star">0</span></div>
+        <div>Acto: <span id="acto">1</span></div>
+    </div>
+
+    <div id="screen" class="screen">
+        <h3 id="enemy-name">¡Un Kantus ha aparecido!</h3>
+        <p id="event-text">Selecciona tu acción para sobrevivir a Halvo Bay.</p>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="attack()">Disparar Lancer</button>
+        <button class="btn" onclick="reload()">Recarga Activa</button>
+        <button class="btn" id="btn-desclasificar" onclick="desclasificar()">Desclasificar Misión</button>
+    </div>
+
+    <h4>Registro de Batalla</h4>
+    <div id="log" class="log">Esperando órdenes del Coronel Loomis...</div>
+</div>
+
+<script>
+    let hp = 100;
+    let ammo = 30;
+    let stars = 0;
+    let acto = 1;
+    let desclasificado = false;
+
+    const logEl = document.getElementById('log');
+    const screenEl = document.getElementById('screen');
+
+    function updateUI() {
+        document.getElementById('hp').innerText = hp;
+        document.getElementById('ammo').innerText = ammo;
+        document.getElementById('stars').innerText = stars;
+        document.getElementById('acto').innerText = acto;
+        
+        if(hp <= 0) gameOver();
+        if(stars >= 40 && acto < 6) unlockAftermath();
+    }
+
+    function addLog(msg) {
+        logEl.innerHTML = `> ${msg}<br>` + logEl.innerHTML;
+    }
+
+    function attack() {
+        if (ammo <= 0) {
+            addLog("¡Sin munición! ¡Recarga!");
+            return;
+        }
+
+        let damageDealt = Math.floor(Math.random() * 20) + 10;
+        let damageTaken = Math.floor(Math.random() * 15) + 5;
+
+        if (desclasificado) {
+            damageTaken += 10; // Más difícil
+            stars += 2;
+            addLog("Misión Desclasificada: ¡Recibes más daño pero ganas más estrellas!");
+        } else {
+            stars += 1;
+        }
+
+        ammo -= 5;
+        hp -= damageTaken;
+        
+        addLog(`Eliminaste Locust. Daño recibido: ${damageTaken}.`);
+        
+        if (stars % 10 === 0) {
+            acto++;
+            addLog(`¡Avanzaste al Acto ${acto}!`);
+        }
+        
+        desclasificado = false; // Reset de misión especial
+        document.getElementById('btn-desclasificar').disabled = false;
+        updateUI();
+    }
+
+    function reload() {
+        let success = Math.random() > 0.5;
+        if (success) {
+            ammo = 30;
+            addLog("¡Recarga Activa Perfecta! Munición al máximo.");
+        } else {
+            ammo = 15;
+            addLog("Fallo en la recarga. Arma encasquillada.");
+        }
+        updateUI();
+    }
+
+    function desclasificar() {
+        desclasificado = true;
+        addLog("Has aceptado el desafío. La visibilidad es nula.");
+        document.getElementById('btn-desclasificar').disabled = true;
+    }
+
+    function unlockAftermath() {
+        screenEl.innerHTML = "<h2>¡CAMPAÑA REPERCUSIONES DESBLOQUEADA!</h2><p>Has obtenido 40 estrellas. Baird y Cole se dirigen a Halvo Bay para buscar refuerzos para Marcus Fenix.</p>";
+        acto = "FINAL";
+        updateUI();
+    }
+
+    function gameOver() {
+        screenEl.innerHTML = "<h2 style='color:red'>SQUAD KILO CAÍDO</h2><button class='btn' onclick='location.reload()'>Reintentar</button>";
+        addLog("Has muerto en combate. Fin de la transmisión.");
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
